@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Днём Рождения, Мама!</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+        }
+
+        /* ══════════ START SCREEN ══════════ */
+        #start-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 50%, #fce4ec 100%);
+            background-size: 300% 300%;
+            animation: bgPulse 5s ease infinite;
+            z-index: 100;
+            transition: opacity 1.4s ease, transform 1.4s ease;
+        }
+        #start-screen.hiding { opacity: 0; transform: scale(1.3); pointer-events: none; }
+
+        @keyframes bgPulse {
+            0%,100% { background-position: 0% 50%; }
+            50%     { background-position: 100% 50%; }
+        }
+
+        .start-card {
+            background: rgba(255,255,255,0.93);
+            padding: 55px 65px;
+            border-radius: 28px;
+            box-shadow: 0 25px 70px rgba(216,27,96,0.25);
+            text-align: center;
+        }
+        .start-title {
+            font-size: 3rem;
+            color: #d81b60;
+            margin-bottom: 6px;
+        }
+        .start-sub { color: #999; font-size: 1rem; margin-bottom: 32px; }
+
+        .start-btn {
+            background: linear-gradient(135deg, #d81b60, #ff4081);
+            color: #fff;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            cursor: pointer;
+            animation: btnGlow 2s ease infinite;
+            transition: transform 0.2s;
+        }
+        .start-btn:hover { transform: scale(1.07) translateY(-3px); }
+        @keyframes btnGlow {
+            0%,100% { box-shadow: 0 8px 25px rgba(216,27,96,0.5); }
+            50%     { box-shadow: 0 8px 45px rgba(255,64,129,0.9), 0 0 70px rgba(255,64,129,0.4); }
+        }
+
+        /* ══════════ MONTAGE SCREEN ══════════ */
+        #montage-screen {
+            position: absolute;
+            inset: 0;
+            display: none;
+            background: #050008;
+            overflow: hidden;
+        }
+
+        /* Ambient lights */
+        .amb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0;
+            transition: background 0.8s, opacity 0.8s;
+            pointer-events: none;
+        }
+        #amb-l { width: 450px; height: 450px; left: -80px;  top: 50%; transform: translateY(-50%); }
+        #amb-r { width: 450px; height: 450px; right: -80px; top: 50%; transform: translateY(-50%); }
+        #amb-c { width: 350px; height: 350px; left: 50%;    top: 50%; transform: translate(-50%,-50%); }
+
+        /* Flash */
+        #flash {
+            position: absolute; inset: 0;
+            opacity: 0; pointer-events: none;
+            z-index: 60;
+        }
+
+        /* ── CATS ── */
+        .side-cat {
+            position: absolute;
+            top: 50%; width: 260px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        #cat-left  { left: 20px;  transform: translateY(-50%) translateX(-80px); }
+        #cat-right { right: 20px; transform: translateY(-50%) translateX(80px); }
+        #cat-left.show  { opacity: 1; transform: translateY(-50%) translateX(0); }
+        #cat-right.show { opacity: 1; transform: translateY(-50%) translateX(0); }
+
+        .side-cat img, .side-cat video {
+            width: 100%;
+            border-radius: 18px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+            display: block;
+        }
+
+        /* ── SUBTITLE ZONE ── */
+        #sub-zone {
+            position: absolute;
+            inset: 0;
+            padding: 0 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            z-index: 20;
+        }
+
+        .sub-text {
+            font-size: 3.2rem;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.25;
+            opacity: 0;
+            text-shadow: 0 0 25px currentColor, 0 0 55px currentColor, 0 2px 6px rgba(0,0,0,0.6);
+        }
+
+        .center-gif {
+            width: 210px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            opacity: 0;
+        }
+
+        /* Text entrance/exit keyframes — JS sets animation-duration */
+        @keyframes subPop {
+            0%   { opacity:0; transform: scale(0.65) translateY(30px); filter: blur(12px); }
+            12%  { opacity:1; transform: scale(1.1)  translateY(0);    filter: blur(0); }
+            78%  { opacity:1; transform: scale(1)    translateY(0);    filter: blur(0); }
+            100% { opacity:0; transform: scale(1.2)  translateY(-15px); filter: blur(8px); }
+        }
+        @keyframes gifPop {
+            0%   { opacity:0; transform: scale(0.4); }
+            15%  { opacity:1; transform: scale(1.08); }
+            80%  { opacity:1; transform: scale(1); }
+            100% { opacity:0; transform: scale(0.7); }
+        }
+
+        /* Countdown */
+        .countdown {
+            font-size: 5rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 30px #ff4081, 0 0 70px #ff4081;
+            animation: cdTick 1s cubic-bezier(0.25,1.5,0.5,1) forwards;
+            line-height: 1;
+        }
+        @keyframes cdTick {
+            0%   { opacity:0; transform: scale(2.2); filter: blur(8px); }
+            30%  { opacity:1; transform: scale(1);   filter: blur(0); }
+            75%  { opacity:1; transform: scale(1); }
+            100% { opacity:0; transform: scale(0.5); filter: blur(4px); }
+        }
+
+        /* ══════════ FINAL SCREEN ══════════ */
+        #final-screen {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(ellipse at center, #1a0030 0%, #050008 100%);
+            overflow-y: auto;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 1.8s ease;
+        }
+        #final-screen.vis { opacity: 1; }
+
+        .final-title {
+            padding: 40px 20px 16px;
+            font-size: 2.8rem;
+            color: #ff4081;
+            text-shadow: 0 0 20px #ff4081, 0 0 50px #d81b60;
+            animation: titleGlow 1.4s ease infinite alternate;
+            text-align: center;
+        }
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 20px #ff4081, 0 0 40px #d81b60; }
+            to   { text-shadow: 0 0 50px #ff4081, 0 0 90px #d81b60, 0 0 130px #ff4081; }
+        }
+
+        .cats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 18px;
+            padding: 10px 40px 70px;
+            max-width: 1400px;
+        }
+
+        .cat-card {
+            opacity: 0;
+            transform: scale(0) rotate(-12deg);
+            animation: cardPop 0.55s cubic-bezier(0.175,0.885,0.32,1.275) forwards;
+        }
+        .cat-card img, .cat-card video {
+            width: 200px; height: 200px;
+            object-fit: cover;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(255,64,129,0.35);
+            border: 2px solid rgba(255,64,129,0.25);
+            display: block;
+        }
+        @keyframes cardPop {
+            to { opacity:1; transform: scale(1) rotate(0deg); }
+        }
+
+        /* ══════════ RESPONSIVE ══════════ */
+
+        /* ── Планшет ── */
+        @media (max-width: 900px) {
+            .side-cat { width: 150px; }
+            #sub-zone { padding: 0 180px; }
+            .sub-text  { font-size: 2.1rem; }
+            .countdown { font-size: 4rem; }
+            .cat-card img, .cat-card video { width: 140px; height: 140px; }
+            .final-title { font-size: 2rem; }
+            .center-gif { width: 160px; }
+        }
+
+        /* ── Телефон (портретная ориентация) ── */
+        @media (max-width: 599px) {
+            /* Стартовый экран */
+            .start-card   { padding: 32px 22px; width: 88vw; }
+            .start-title  { font-size: 1.85rem; }
+            .start-sub    { font-size: 0.88rem; margin-bottom: 22px; }
+            .start-btn    { padding: 14px 32px; font-size: 1.05rem; }
+
+            /* Котики — переезжают в нижние углы */
+            .side-cat {
+                width: 120px;
+                top: auto !important;
+                bottom: 12px;
+            }
+            /* исходное (скрытое) положение */
+            #cat-left  { left: 8px;  transform: translateX(-90px) !important; }
+            #cat-right { right: 8px; transform: translateX(90px)  !important; }
+            /* видимое положение */
+            #cat-left.show  { transform: translateX(0) !important; }
+            #cat-right.show { transform: translateX(0) !important; }
+
+            /* Зона субтитров — на всю ширину, снизу отступ под котиков */
+            #sub-zone {
+                padding: 0 14px 155px;
+                justify-content: center;
+            }
+            .sub-text   { font-size: 1.65rem; }
+            .countdown  { font-size: 3.8rem; }
+            .center-gif { width: 120px; }
+
+            /* Финальный экран */
+            .final-title { font-size: 1.55rem; padding: 22px 14px 10px; }
+            .cats-grid   { gap: 10px; padding: 8px 10px 55px; }
+            .cat-card img, .cat-card video { width: 100px; height: 100px; border-radius: 12px; }
+        }
+
+        /* ── Очень маленький экран ── */
+        @media (max-width: 380px) {
+            .start-title { font-size: 1.55rem; }
+            .sub-text    { font-size: 1.35rem; }
+            .side-cat    { width: 95px; }
+            .cat-card img, .cat-card video { width: 82px; height: 82px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ░░░░ START ░░░░ -->
+<div id="start-screen">
+    <div class="start-card">
+        <div class="start-title">🎉 С Днём Рождения!</div>
+        <div class="start-sub">Нажми и начнётся праздник ✨</div>
+        <button class="start-btn" onclick="startShow()">▶ Начать!</button>
+    </div>
+</div>
+
+<!-- ░░░░ MONTAGE ░░░░ -->
+<div id="montage-screen">
+    <div class="amb" id="amb-l"></div>
+    <div class="amb" id="amb-c"></div>
+    <div class="amb" id="amb-r"></div>
+    <div id="flash"></div>
+    <div class="side-cat" id="cat-left"></div>
+    <div id="sub-zone"></div>
+    <div class="side-cat" id="cat-right"></div>
+</div>
+
+<!-- ░░░░ FINAL ░░░░ -->
+<div id="final-screen">
+    <div class="final-title">🥳 все эти котики тебе!!!🎂</div>
+    <div class="cats-grid" id="cats-grid"></div>
+</div>
+
+<audio id="music" src="music.mp3" preload="auto"></audio>
+
+<script>
+/* ─── Scenes ─── */
+const scenes = [
+    {
+        text: 'Стрелки крутятся всё быстрее...',
+        color: '#ffb300',
+        duration: 3500,
+        left:  { type: 'img', url: 'https://media.tenor.com/ShXqrVOXsM0AAAAj/scuba-scuba-dance.gif' },
+        right: { type: 'img', url: 'https://media.tenor.com/vkJQcnn06_EAAAAj/dancing-cat-oppa-gangnam-style.gif' }
+    },
+    {
+        text: 'Стали звёзды на год взрослей...',
+        color: '#ce93d8',
+        duration: 3500,
+        left:  { type: 'img', url: 'https://media1.tenor.com/m/sxgMdMO1fg4AAAAd/cats-dance-ai-cat-kitty-car-dancing-cool-funny-gif-every-day.gif' },
+        right: { type: 'img', url: 'https://media.tenor.com/6wOn1FCxiJMAAAAj/cat-dance.gif' }
+    },
+    {
+        text: 'Лист сорвался с календаря...',
+        color: '#4dd0e1',
+        duration: 3000,
+        left:  { type: 'img', url: 'https://media.tenor.com/kQA86PqyXZQAAAAj/small-dancing-white-cat-dance-funny.gif' },
+        right: { type: 'img', url: 'https://media.tenor.com/Ti6EKPL_K6wAAAAj/dansi-dancing-cat.gif' }
+    },
+    {
+        text: 'Но не стоит грустить зря!',
+        color: '#69f0ae',
+        duration: 4000,
+        left:  { type: 'img', url: 'https://media1.tenor.com/m/68ggIeBw7jQAAAAd/catjam-cat.gif' },
+        right: { type: 'img', url: 'https://media1.tenor.com/m/k2v7leuqezQAAAAd/cat-dancing-celebrate.gif' }
+    },
+    {
+        text: 'С Днём Рождения!!! 💖',
+        color: '#ff4081',
+        duration: 14000,
+        countdown: 14,
+        left:  { type: 'img', url: 'https://media1.tenor.com/m/DTaGwlaEDbwAAAAd/povjisoo-cat-tiktok-dancing.gif' },
+        right: { type: 'img', url: 'https://media.tenor.com/RUirV7Sgg2AAAAAj/romantice-cat.gif' }
+    },
+    {
+        text: 'Успеха, радости, везения! 🥳',
+        color: '#ff9800',
+        duration: 4000,
+        left:  { type: 'img', url: 'https://media1.tenor.com/m/FAYDV3vtzYYAAAAd/cats-urik3852.gif' },
+        right: { type: 'img', url: 'https://media1.tenor.com/m/VzREihnVZywAAAAd/dancing-cat-cat-dancing.gif' }
+    },
+    {
+        text: 'Любых желаний исполнения...',
+        color: '#f48fb1',
+        duration: 4000,
+        left:  { type: 'img', url: 'https://media.tenor.com/6AitH_gG5U0AAAAj/elgatitolover-elgatito.gif' },
+        right: { type: 'img', url: 'https://media1.tenor.com/m/JdR6au1RLrMAAAAd/cat-dancing.gif' }
+    },
+    {
+        text: 'МАМА, ТЫ САМАЯ ЛУЧШАЯ! 🌸',
+        color: '#ff4081',
+        duration: 10000,
+        left:   { type: 'video', url: '2.mp4' },
+        right:  { type: 'video', url: '1.mp4' },
+        center: { type: 'img', url: 'https://media1.tenor.com/m/Yp0KOBZZ9RYAAAAd/%D0%BA%D0%BE%D1%82-%D0%BF%D0%BE%D1%86%D0%B5%D0%BB%D1%83%D0%B9.gif' }
+    }
+];
+
+/* ─── Helpers ─── */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    return `${r},${g},${b}`;
+}
+
+function doFlash(color, alpha = 0.85) {
+    const el = document.getElementById('flash');
+    el.style.transition = 'none';
+    el.style.background = color;
+    el.style.opacity = alpha;
+    requestAnimationFrame(() => {
+        el.style.transition = 'opacity 0.35s ease';
+        el.style.opacity = 0;
+    });
+}
+
+function setAmb(color) {
+    const rgb = hexToRgb(color);
+    document.getElementById('amb-l').style.background = `rgba(${rgb},0.45)`;
+    document.getElementById('amb-r').style.background = `rgba(${rgb},0.35)`;
+    document.getElementById('amb-c').style.background = `rgba(${rgb},0.25)`;
+    ['amb-l','amb-r','amb-c'].forEach(id => document.getElementById(id).style.opacity = '1');
+}
+
+function fillMedia(container, media) {
+    container.innerHTML = '';
+    if (!media) return;
+    if (media.type === 'video') {
+        const v = document.createElement('video');
+        v.src = media.url;
+        v.autoplay = true; v.loop = true; v.muted = true; v.playsInline = true;
+        container.appendChild(v);
+    } else {
+        const img = document.createElement('img');
+        img.src = media.url; img.alt = '';
+        container.appendChild(img);
+    }
+}
+
+/* ─── Main show ─── */
+async function startShow() {
+    const startScreen = document.getElementById('start-screen');
+    startScreen.classList.add('hiding');
+    await sleep(1300);
+    startScreen.style.display = 'none';
+
+    const montage = document.getElementById('montage-screen');
+    montage.style.display = 'block';
+
+    document.getElementById('music').play().catch(() => {});
+
+    const catL   = document.getElementById('cat-left');
+    const catR   = document.getElementById('cat-right');
+    const subZone = document.getElementById('sub-zone');
+
+    for (let i = 0; i < scenes.length; i++) {
+        const s = scenes[i];
+
+        /* 1. Flash + lights */
+        doFlash(s.color, 0.75);
+        setAmb(s.color);
+
+        /* 2. Slide out old cats */
+        catL.classList.remove('show');
+        catR.classList.remove('show');
+        await sleep(220);
+
+        /* 3. Load new cats */
+        fillMedia(catL, s.left);
+        fillMedia(catR, s.right);
+        catL.classList.add('show');
+        catR.classList.add('show');
+
+        /* 4. Build subtitle */
+        subZone.innerHTML = '';
+
+        const textEl = document.createElement('div');
+        textEl.className = 'sub-text';
+        textEl.style.color = s.color;
+        textEl.style.animationDuration = s.duration + 'ms';
+        textEl.style.animationName = 'subPop';
+        textEl.style.animationFillMode = 'forwards';
+        textEl.innerText = s.text;
+        subZone.appendChild(textEl);
+
+        if (s.center) {
+            const gifEl = document.createElement('img');
+            gifEl.className = 'center-gif';
+            gifEl.src = s.center.url;
+            gifEl.style.animationDuration = s.duration + 'ms';
+            gifEl.style.animationName = 'gifPop';
+            gifEl.style.animationFillMode = 'forwards';
+            subZone.appendChild(gifEl);
+        }
+
+        /* 5. Countdown (if scene has one) */
+        if (s.countdown) {
+            const cdSlot = document.createElement('div');
+            cdSlot.id = 'cd-slot';
+            subZone.appendChild(cdSlot);
+
+            const tickMs = s.duration / s.countdown;
+            for (let n = s.countdown; n >= 1; n--) {
+                const num = document.createElement('div');
+                num.className = 'countdown';
+                num.textContent = n;
+                cdSlot.innerHTML = '';
+                cdSlot.appendChild(num);
+                await sleep(tickMs);
+            }
+        } else {
+            /* 5. Wait for scene to finish */
+            await sleep(s.duration);
+        }
+    }
+
+    /* ─── Transition to final screen ─── */
+    catL.classList.remove('show');
+    catR.classList.remove('show');
+    subZone.innerHTML = '';
+
+    /* Big pink flash */
+    const flashEl = document.getElementById('flash');
+    flashEl.style.transition = 'none';
+    flashEl.style.background = '#ff4081';
+    flashEl.style.opacity = '1';
+
+    await sleep(150);
+
+    const finalScreen = document.getElementById('final-screen');
+    finalScreen.style.display = 'flex';
+    await sleep(50);
+    finalScreen.classList.add('vis');
+
+    flashEl.style.transition = 'opacity 1.2s ease';
+    flashEl.style.opacity = '0';
+
+    /* Populate cats grid */
+    const grid = document.getElementById('cats-grid');
+    const allMedia = [];
+    scenes.forEach(s => {
+        if (s.left)   allMedia.push(s.left);
+        if (s.right)  allMedia.push(s.right);
+        if (s.center) allMedia.push(s.center);
+    });
+
+    allMedia.forEach((media, idx) => {
+        const card = document.createElement('div');
+        card.className = 'cat-card';
+        card.style.animationDelay = `${idx * 0.12}s`;
+
+        if (media.type === 'video') {
+            const v = document.createElement('video');
+            v.src = media.url;
+            v.autoplay = true; v.loop = true; v.muted = true; v.playsInline = true;
+            card.appendChild(v);
+        } else {
+            const img = document.createElement('img');
+            img.src = media.url; img.alt = '';
+            card.appendChild(img);
+        }
+        grid.appendChild(card);
+    });
+}
+</script>
+</body>
+</html>
